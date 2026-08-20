@@ -1,0 +1,2 @@
+Timestamp,ph,Hardness,Solids,Chloramines,Sulfate,Conductivity,Organic_carbon,Trihalomethanes,Turbidity,Prediction,Confidence,Risk,Recommendation
+2026-08-06 23:10:01,7.0,190.0,22000.0,8.0,330.0,450.0,15.0,100.0,3.5,Non-Potable,0.32,High,The sample is unsafe. Avoid drinking it until proper water treatment and verification are completed.
