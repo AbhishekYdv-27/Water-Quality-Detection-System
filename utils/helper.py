@@ -1,4 +1,5 @@
 import json
+import math
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -25,6 +26,18 @@ FEATURE_COLUMNS = [
 ]
 TARGET_COLUMN = "Potability"
 
+INPUT_RANGES = {
+    "ph": (0.0, 14.0),
+    "Hardness": (0.0, 500.0),
+    "Solids": (0.0, 100000.0),
+    "Chloramines": (0.0, 20.0),
+    "Sulfate": (0.0, 1000.0),
+    "Conductivity": (0.0, 2000.0),
+    "Organic_carbon": (0.0, 50.0),
+    "Trihalomethanes": (0.0, 300.0),
+    "Turbidity": (0.0, 20.0),
+}
+
 
 def get_project_root() -> Path:
     return PROJECT_ROOT
@@ -34,7 +47,18 @@ def load_css() -> None:
     css_path = PROJECT_ROOT / "assets" / "style.css"
     if css_path.exists():
         with open(css_path, "r", encoding="utf-8") as handle:
-            st.markdown(f"<style>{handle.read()}</style>", unsafe_allow_html=True)
+            css = handle.read()
+        if st.session_state.get("theme_mode", False):
+            css += """
+            .stApp, [data-testid=\"stMain\"] { background: #102331; color: #e7f3f2; }
+            .section-card, .metric-card, .stMetric { background: #183342; border-color: #2c5361; color: #e7f3f2; }
+            h1, h2, h3, p, li, label { color: #e7f3f2; }
+            """
+        st.markdown(f"""
+        <style>
+        {css}
+        </style>
+        """, unsafe_allow_html=True)
 
 
 def get_theme_class() -> str:
@@ -46,6 +70,7 @@ def ensure_data_exists() -> None:
         raise FileNotFoundError(f"Dataset not found at {DATA_PATH}")
 
 
+@st.cache_resource
 def load_model_bundle() -> Dict[str, Any]:
     ensure_data_exists()
     if not MODEL_PATH.exists():
@@ -73,9 +98,19 @@ def validate_user_inputs(values: Dict[str, Any]) -> List[str]:
     errors = []
     for key, value in values.items():
         try:
-            float(value)
+            numeric_value = float(value)
         except (TypeError, ValueError):
             errors.append(f"{key} must be numeric.")
+            continue
+
+        if not math.isfinite(numeric_value):
+            errors.append(f"{key} must be a finite number.")
+            continue
+
+        if key in INPUT_RANGES:
+            minimum, maximum = INPUT_RANGES[key]
+            if not minimum <= numeric_value <= maximum:
+                errors.append(f"{key} must be between {minimum:g} and {maximum:g}.")
     return errors
 
 

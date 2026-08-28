@@ -89,7 +89,6 @@ def render_dashboard():
     """, unsafe_allow_html=True)
     if MODEL_PATH.exists():
         from sklearn.metrics import roc_curve, auc
-        from sklearn.model_selection import train_test_split
         from utils.preprocessing import prepare_data
 
         X_train, X_test, y_train, y_test = prepare_data(data)

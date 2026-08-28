@@ -2,12 +2,11 @@ import joblib
 import pandas as pd
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, roc_auc_score, roc_curve
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.impute import SimpleImputer
 
 from utils.helper import DATA_PATH, FEATURE_COLUMNS, MODEL_PATH, TARGET_COLUMN
 from utils.preprocessing import prepare_data

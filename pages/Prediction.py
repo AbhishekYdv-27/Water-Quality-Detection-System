@@ -1,5 +1,3 @@
-import io
-import pandas as pd
 import streamlit as st
 from datetime import datetime
 
@@ -34,6 +32,7 @@ def render_prediction():
         "Trihalomethanes": 100.0,
         "Turbidity": 3.5,
     }
+    form_values = st.session_state.get("sample_values", sample_values)
 
     with st.form("prediction_form"):
         st.markdown("""
@@ -43,7 +42,7 @@ def render_prediction():
         """, unsafe_allow_html=True)
         values = {}
         for feature in FEATURE_COLUMNS:
-            values[feature] = st.number_input(feature, value=float(sample_values[feature]), step=0.01, format="%.2f")
+            values[feature] = st.number_input(feature, value=float(form_values[feature]), step=0.01, format="%.2f")
 
         submitted = st.form_submit_button("Predict Water Quality", use_container_width=True)
         if submitted:
@@ -96,6 +95,7 @@ def render_prediction():
             st.rerun()
     with col2:
         if st.button("🔄 Reset Form", use_container_width=True):
+            st.session_state.pop("sample_values", None)
             st.rerun()
 
     history = load_prediction_history()
