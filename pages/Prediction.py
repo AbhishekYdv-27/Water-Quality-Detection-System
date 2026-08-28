@@ -33,6 +33,7 @@ def render_prediction():
         "Turbidity": 3.5,
     }
     form_values = st.session_state.get("sample_values", sample_values)
+    report_data = None
 
     with st.form("prediction_form"):
         st.markdown("""
@@ -44,7 +45,7 @@ def render_prediction():
         for feature in FEATURE_COLUMNS:
             values[feature] = st.number_input(feature, value=float(form_values[feature]), step=0.01, format="%.2f")
 
-        submitted = st.form_submit_button("Predict Water Quality", use_container_width=True)
+        submitted = st.form_submit_button("Predict Water Quality", width="stretch")
         if submitted:
             errors = validate_user_inputs(values)
             if errors:
@@ -80,27 +81,29 @@ def render_prediction():
                 "Recommendation": rec,
             }
             save_prediction_history(history_record)
+            report_data = create_pdf_report({"prediction": pred_label, "confidence": confidence, "risk": risk, "recommendation": rec})
 
-            st.download_button(
-                label="Download PDF Report",
-                data=create_pdf_report({"prediction": pred_label, "confidence": confidence, "risk": risk, "recommendation": rec}),
-                file_name="prediction_report.pdf",
-                mime="application/pdf",
-            )
+    if report_data is not None:
+        st.download_button(
+            label="Download PDF Report",
+            data=report_data,
+            file_name="prediction_report.pdf",
+            mime="application/pdf",
+        )
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🧪 Autofill Sample", use_container_width=True):
+        if st.button("🧪 Autofill Sample", width="stretch"):
             st.session_state["sample_values"] = sample_values
             st.rerun()
     with col2:
-        if st.button("🔄 Reset Form", use_container_width=True):
+        if st.button("🔄 Reset Form", width="stretch"):
             st.session_state.pop("sample_values", None)
             st.rerun()
 
     history = load_prediction_history()
     if not history.empty:
         st.subheader("Prediction History")
-        st.dataframe(history.tail(5), use_container_width=True)
+        st.dataframe(history.tail(5), width="stretch")
         csv_data = history.to_csv(index=False).encode("utf-8")
         st.download_button("Download History CSV", csv_data, file_name="prediction_history.csv", mime="text/csv")

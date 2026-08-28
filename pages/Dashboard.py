@@ -37,7 +37,7 @@ def render_dashboard():
     """, unsafe_allow_html=True)
     missing_plot = plot_missing_values(data)
     if missing_plot is not None:
-        st.plotly_chart(missing_plot, use_container_width=True)
+        st.plotly_chart(missing_plot, width="stretch")
     else:
         st.success("No missing values found in the dataset.")
 
@@ -56,7 +56,7 @@ def render_dashboard():
     """, unsafe_allow_html=True)
     selected_feature = st.selectbox("Choose a feature", FEATURE_COLUMNS)
     dist_plot = plot_distribution(data, selected_feature)
-    st.plotly_chart(dist_plot, use_container_width=True)
+    st.plotly_chart(dist_plot, width="stretch")
 
     st.markdown("""
     <div class="section-card">
@@ -66,9 +66,9 @@ def render_dashboard():
     bundle = load_model_bundle()
     results = bundle["results"]
     comparison_df = pd.DataFrame([(name, values["accuracy"], values["f1"], values["roc_auc"]) for name, values in results.items()], columns=["Model", "Accuracy", "F1", "ROC AUC"])
-    st.dataframe(comparison_df, use_container_width=True)
+    st.dataframe(comparison_df, width="stretch")
     fig_acc = px.bar(comparison_df, x="Model", y="Accuracy", color="Model", title="Accuracy by Model")
-    st.plotly_chart(fig_acc, use_container_width=True)
+    st.plotly_chart(fig_acc, width="stretch")
 
     st.markdown("""
     <div class="section-card">
@@ -78,7 +78,7 @@ def render_dashboard():
     if MODEL_PATH.exists():
         model = bundle["model"]
         if hasattr(model, "feature_importances_"):
-            st.plotly_chart(plot_feature_importance(model, FEATURE_COLUMNS), use_container_width=True)
+            st.plotly_chart(plot_feature_importance(model, FEATURE_COLUMNS), width="stretch")
         else:
             st.info("Feature importance is not available for the selected model.")
 
@@ -94,17 +94,19 @@ def render_dashboard():
         X_train, X_test, y_train, y_test = prepare_data(data)
         model = bundle["model"]
         y_score = model.predict_proba(X_test)[:, 1]
-        fpr, tpr, _ = roc_curve(y_test, y_score)
-        roc_auc = auc(fpr, tpr)
+        if y_test.nunique() > 1:
+            fpr, tpr, _ = roc_curve(y_test, y_score)
+            roc_auc = auc(fpr, tpr)
+            fig_roc = px.area(
+                x=fpr,
+                y=tpr,
+                title=f"ROC Curve (AUC={roc_auc:.3f})",
+                labels={"x": "False Positive Rate", "y": "True Positive Rate"},
+            )
+            st.plotly_chart(fig_roc, width="stretch")
+        else:
+            st.info("ROC curve is unavailable because the evaluation split contains only one class.")
 
-        fig_roc = px.area(
-            x=fpr,
-            y=tpr,
-            title=f"ROC Curve (AUC={roc_auc:.3f})",
-            labels={"x": "False Positive Rate", "y": "True Positive Rate"},
-        )
-        st.plotly_chart(fig_roc, use_container_width=True)
-
-        cm = confusion_matrix(y_test, model.predict(X_test))
+        cm = confusion_matrix(y_test, model.predict(X_test), labels=[0, 1])
         cm_df = pd.DataFrame(cm, index=["Actual 0", "Actual 1"], columns=["Pred 0", "Pred 1"])
         st.dataframe(cm_df)
